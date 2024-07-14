@@ -1,0 +1,4 @@
+#ifndef MY_PROJECT_MY_HEADER_H
+#define MY_PROJECT_MY_HEADER_H
+#endif // MY_PROJECT_MY_HEADER_H
+

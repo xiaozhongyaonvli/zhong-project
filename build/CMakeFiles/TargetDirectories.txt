@@ -1,0 +1,3 @@
+/home/robotz/projects/my_project/build/CMakeFiles/opencv_fir.dir
+/home/robotz/projects/my_project/build/CMakeFiles/edit_cache.dir
+/home/robotz/projects/my_project/build/CMakeFiles/rebuild_cache.dir
