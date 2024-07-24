@@ -7,7 +7,7 @@
 int main(int argc, char** argv) {
     // 检查参数个数
     if (argc < 3) {
-        std::cerr << "Usage: " << argv[0] << " <source_image> <mask_image> <output_image>" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <source_image> <mask_image>" << std::endl;
         return -1;
     }
 
@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // 确保遮罩图像与源图像的尺寸相同  不相同会出问题(不过不同管格式）
+    // 确保遮罩图像与源图像的尺寸相同
     if (source_image.size() != mask_image.size()) {
         std::cerr << "Source image and mask image have different sizes. Resizing mask image to match source image." << std::endl;
         cv::Mat resized_mask;
@@ -39,37 +39,62 @@ int main(int argc, char** argv) {
     // 创建一个黑色背景图像，类型和源图像相同
     cv::Mat black_background = cv::Mat::zeros(source_image.size(), source_image.type());
 
-    // 应用反转后的遮罩，将遮罩图像的黑色部分保留在源图像中
-    cv::Mat result_image;
-    cv::bitwise_and(source_image, source_image, result_image, inverted_mask);
+    // 将图像分块处理的大小
+    int block_size = 100;
+    cv::Mat result_image = cv::Mat::zeros(source_image.size(), source_image.type());
 
-    // 1. 灰度转换
-    cv::Mat gray_image;
-    cv::cvtColor(result_image, gray_image, cv::COLOR_BGR2GRAY);
+    // 遍历每个块
+    for (int y = 0; y < source_image.rows; y += block_size) {
+        for (int x = 0; x < source_image.cols; x += block_size) {
+            // 定义块的范围
+            cv::Rect block_rect(x, y, block_size, block_size);
+            block_rect &= cv::Rect(0, 0, source_image.cols, source_image.rows);
 
-    // 2. 高斯模糊
-    cv::Mat blurred_image;
-    cv::GaussianBlur(gray_image, blurred_image, cv::Size(5, 5), 0);
+            // 获取图像块
+            cv::Mat source_block = source_image(block_rect);
+            cv::Mat mask_block = inverted_mask(block_rect);
 
-    // 3. 边缘检测
-    cv::Mat edges;
-    cv::Canny(blurred_image, edges, 50, 150);
+            // 应用反转后的遮罩，将遮罩图像的黑色部分保留在源图像中
+            cv::Mat block_result;
+            cv::bitwise_and(source_block, source_block, block_result, mask_block);
 
-    // 4. 膨胀和腐蚀
-    cv::Mat dilated_edges;
-    cv::dilate(edges, dilated_edges, cv::Mat::ones(4, 4, CV_8U), cv::Point(-1, -1), 3);
-    cv::Mat eroded_edges;
-    cv::erode(dilated_edges, eroded_edges, cv::Mat::ones(4, 4, CV_8U), cv::Point(-1, -1), 1);
+            // 灰度转换
+            cv::Mat gray_image;
+            cv::cvtColor(block_result, gray_image, cv::COLOR_BGR2GRAY);
 
-    // 创建一个结果图像，显示处理后的车道线
-    cv::Mat lane_lines;
-    cv::cvtColor(eroded_edges, lane_lines, cv::COLOR_GRAY2BGR);
-    
+            // 高斯模糊
+            cv::Mat blurred_image;
+            cv::GaussianBlur(gray_image, blurred_image, cv::Size(5, 5), 0);
+
+            // 边缘检测
+            cv::Mat edges;
+            cv::Canny(blurred_image, edges, 50, 150);
+
+            // 膨胀和腐蚀
+            cv::Mat dilated_edges;
+            cv::dilate(edges, dilated_edges, cv::Mat::ones(2, 2, CV_8U), cv::Point(-1, -1), 1);
+            cv::Mat eroded_edges;
+            cv::erode(dilated_edges, eroded_edges, cv::Mat::ones((int)4*(1.5-y*1.0/source_image.rows), (int)4*(1.5-y*1.0/source_image.rows), CV_8U), cv::Point(-1, -1), 1);
+
+            // 霍夫变换检测直线
+            std::vector<cv::Vec4i> lines;
+            if (y*4<source_image.rows)
+                cv::HoughLinesP(dilated_edges, lines, 1, CV_PI / 180, 150, 60-y*1.0/source_image.rows*10, 10);
+            else
+                cv::HoughLinesP(dilated_edges, lines, 1, CV_PI / 180, 8, 5, 2);
+            // 在结果图像的相应块位置绘制检测到的直线
+            for (size_t i = 0; i < lines.size(); i++) {
+                cv::Vec4i l = lines[i];
+                cv::line(result_image, cv::Point(l[0] + x, l[1] + y), cv::Point(l[2] + x, l[3] + y), cv::Scalar(255, 255, 255), 4, cv::LINE_AA);
+            }
+        }
+    }
+
     // 保存和显示车道线图像
-    cv::imwrite("../images/lane_lines.png", lane_lines);
+    cv::imwrite("../images/lane_lines.png", result_image);
 
     cv::namedWindow("Lane Lines", cv::WINDOW_AUTOSIZE);
-    cv::imshow("Lane Lines", lane_lines);
+    cv::imshow("Lane Lines", result_image);
 
     // 等待用户按键
     cv::waitKey(0);

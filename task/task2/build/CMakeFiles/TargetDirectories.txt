@@ -1,3 +1,3 @@
-/home/robotz/vscode/task2/build/CMakeFiles/main.dir
-/home/robotz/vscode/task2/build/CMakeFiles/edit_cache.dir
-/home/robotz/vscode/task2/build/CMakeFiles/rebuild_cache.dir
+/home/robotz/vscode/task/task2/build/CMakeFiles/main.dir
+/home/robotz/vscode/task/task2/build/CMakeFiles/edit_cache.dir
+/home/robotz/vscode/task/task2/build/CMakeFiles/rebuild_cache.dir
