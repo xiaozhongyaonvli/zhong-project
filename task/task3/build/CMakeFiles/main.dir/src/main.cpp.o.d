@@ -1,5 +1,5 @@
 CMakeFiles/main.dir/src/main.cpp.o: \
- /home/robotz/vscode/task3/src/main.cpp /usr/include/stdc-predef.h \
+ /home/robotz/vscode/task/task3/src/main.cpp /usr/include/stdc-predef.h \
  /usr/local/opencv4/include/opencv4/opencv2/opencv.hpp \
  /usr/local/opencv4/include/opencv4/opencv2/opencv_modules.hpp \
  /usr/local/opencv4/include/opencv4/opencv2/core.hpp \

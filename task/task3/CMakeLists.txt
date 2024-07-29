@@ -18,3 +18,6 @@ add_executable(main src/main.cpp)
 
 # 链接OpenCV库
 target_link_libraries(main ${OpenCV_LIBS})
+
+# 设置编译选项以生成调试信息
+set(CMAKE_BUILD_TYPE Debug)
